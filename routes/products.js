@@ -2,6 +2,8 @@ var express = require('express');
 var router = express.Router();
 
 const productModel = require('../models/productModel');
+const JWT = require("jsonwebtoken");
+const config = require("../utils/tokenConfig");
 const upload = require('../utils/upload');
 const sendMail = require('../utils/email');
 
@@ -9,102 +11,97 @@ const sendMail = require('../utils/email');
 
 router.get('/all', async function(req, res, next) {
     try {
-      let list = await productModel.find().populate("userID");
-      res.status(200).json({status: true, message: "Thành công", data: list});
+      const token = req.header("Authorization").split(' ')[1];
+      if(token){
+        JWT.verify(token, config.SECRETKEY, async function (err, id){
+          if(err){
+            res.status(403).json({"status": 403, "err": err});
+          }else{
+            let listProducts = await productModel.find().populate("category");
+            res.status(200).json({status: true, message: "Thành công", data: listProducts});
+          }
+        });
+      }else{
+        res.status(401).json({"status": 401});
+      }
     } catch (e) {
       res.status(400).json({status: false, message: "Có lỗi xảy ra" + e})
     }
   });
 
-  // Lấy tất cả sản phẩm lớn hơn người dùng truyền vào
+  // Chi tiết sản phẩm
 
-  router.get('/lay-danh-sach-lon-hon-nguoi-dung', async function(req, res, next) {
+  router.get('/detail', async function(req, res, next) {
     try {
-      const {soluong} = req.query;
-      let list = await productModel.find({quantity: {$gt: soluong}});
-      res.status(200).json({status: true, message: "Thành công", data: list});
+      const token = req.header("Authorization").split(' ')[1];
+      if(token){
+        JWT.verify(token, config.SECRETKEY, async function (err, id){
+          if(err){
+            res.status(403).json({"status": 403, "err": err});
+          }else{
+            const {id} = req.query;
+            let productDetail = await productModel.findById(id);
+            if(productDetail) {
+              res.status(200).json({status: true, message: "Thành công", data: productDetail});
+            } else {
+              res.status(400).json({status: true, message: "Không tìm thấy người dùng"})
+            }
+          }
+        });
+      }else{
+        res.status(401).json({"status": 401});
+      }
     } catch (e) {
-      res.status(400).json({status: false, message: "Có lỗi xảy ra"})
+      res.status(400).json({status: false, message: "Có lỗi xảy ra" + e})
     }
   });
 
-  router.get('/lay-danh-sach-tu-den', async function(req, res, next) {
+  // Tìm kiếm sản phẩm theo khoản giá
+
+  router.get('/find-products', async function(req, res, next) {
     try {
-      const {min,max} = req.query;
-      let list = await productModel.find({price: {$gte: min, $lte: max}});
-      res.status(200).json(list);
+      const token = req.header("Authorization").split(' ')[1];
+      if(token){
+        JWT.verify(token, config.SECRETKEY, async function (err, id){
+          if(err){
+            res.status(403).json({"status": 403, "err": err});
+          }else{
+            const { min, max } = req.query;
+            const listProducts = await productModel.find({price: {$gte: min, $lte: max}});
+            res.status(200).json({status: true, message: "Successfully", data: listProducts});
+          }
+        });
+      }else{
+        res.status(401).json({"status": 401});
+      }
     } catch (e) {
-      res.status(400).json({status: false, message: "Có lỗi xảy ra"})
+      res.status(400).json({status: false, message: "Có lỗi xảy ra" + e})
     }
   });
 
-  router.get('/lay-danh-sach-tu-den', async function(req, res, next) {
+  // Sắp xếp sản phẩm theo khoản giá từ thấp đến cao
+
+  router.get('/sort-products', async function(req, res, next) {
     try {
-      const {min,max} = req.query;
-      let list = await productModel.find({price: {$gte: min, $lte: max}});
-      res.status(200).json(list);
+      const token = req.header("Authorization").split(' ')[1];
+      if(token){
+        JWT.verify(token, config.SECRETKEY, async function (err, id){
+          if(err){
+            res.status(403).json({"status": 403, "err": err});
+          }else{
+            const listProducts = await productModel.find().sort({score: 1});
+            res.status(200).json({status: true, message: "Successfully", data: listProducts});
+          }
+        });
+      }else{
+        res.status(401).json({"status": 401});
+      }
     } catch (e) {
-      res.status(400).json({status: false, message: "Có lỗi xảy ra"})
+      res.status(400).json({status: false, message: "Có lỗi xảy ra" + e})
     }
   });
 
-  router.get('/lay-san-pham-theo-id', async function(req, res, next) {
-    try {
-      const {id} = req.query;
-      let product = await productModel.findById(id);
-      res.status(200).json(product);
-    } catch (e) {
-      res.status(400).json({status: false, message: "Có lỗi xảy ra"})
-    }
-  });
-
-// Thêm sản phẩm
-
-router.post('/add', async (req, res) => {
-  try {
-    const {name, price, quantity} = req.body;
-    const newProduct = {name, price, quantity};
-    await productModel.create(newProduct);
-    res.status(200).json({status: true, message: "Thành công"})
-  } catch (e) {
-    res.status(400).json({status: true, message: "Có lỗi xảy ra"})
-  }
-})
-
-// Sửa sản phẩm
-
-router.put('/edit', async (req, res) => {
-
-  try {
-    const {id, name, price, quantity} = req.body;
-    const productUpdate = await productModel.findById(id);
-
-    if(productUpdate) { 
-      productUpdate.name = name ? name : productUpdate.name;
-      productUpdate.price = price ? price : productUpdate.price;
-      productUpdate.quantity = quantity ? quantity : productUpdate.quantity;
-      await productUpdate.save();
-      res.status(200).json({status: true, message: "Thành công"})
-    } else {
-      res.status(300).json({status: true, message: "Not found"})
-    }
-    
-  } catch (e) {
-    res.status(400).json({status: true, message: "Có lỗi xảy ra"})
-  }
-})
-
-// Xoá sản phẩm
-
-router.delete('/delete/:id', async (req, res) => {
-  try {
-    const {id} = req.params;
-    await productModel.findByIdAndDelete(id);
-    res.status(200).json({status: true, message: "Thành công"})
-  } catch (e) {
-    res.status(400).json({status: true, message: "Có lỗi xảy ra"})
-  }
-})
+  
 
 // Upload một file
 

@@ -6,8 +6,8 @@ const product = new schema({
     id: {type: ObjectId},
     name: { type: String },
     price: {type: Number},
-    quantity: {type: Number},
-    userID: {type: mongoose.Schema.Types.ObjectId, ref: "user"},
+    rating: {type: Number},
+    category: {type: ObjectId, ref: "category"}
 })
 
 module.exports = mongoose.models.product || mongoose.model("product",product);

@@ -7,12 +7,16 @@ var logger = require('morgan');
 const mongoose = require('mongoose');
 require("./models/userModel");
 require("./models/productModel");
+require("./models/categoryModel");
 require("./models/studentModel");
+require("./models/customerModel");
+
 
 let indexRouter = require('./routes/index');
 let usersRouter = require('./routes/users');
 let productsRouter = require('./routes/products');
-let studentsRouter = require('./routes/students')
+let studentsRouter = require('./routes/students');
+let customerRouter = require('./routes/customers');
 
 const app = express();
 
@@ -32,6 +36,7 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/products', productsRouter);
 app.use('/students',studentsRouter);
+app.use('/customers', customerRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
