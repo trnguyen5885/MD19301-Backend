@@ -12,8 +12,20 @@ const config = require("../utils/tokenConfig");
 
 router.get('/all', async (req, res, next) => {
     try {
-      const listStudent = await studentModel.find();
-      res.status(200).json({status: true, message: "Successfully", data: listStudent});    
+        const token = req.header("Authorization").split(' ')[1];
+        if(token){
+          JWT.verify(token, config.SECRETKEY, async function (err, id){
+            if(err){
+              res.status(403).json({"status": 403, "err": err});
+            }else{
+                const listStudent = await studentModel.find();
+                res.status(200).json({status: true, message: "Successfully", data: listStudent});  
+            }
+          });
+        }else{
+          res.status(401).json({"status": 401});
+        }
+        
     } catch (e) {
         res.status(400).json({status: false, message: "Error: " + e });
     }
@@ -23,9 +35,21 @@ router.get('/all', async (req, res, next) => {
 
 router.get('/all-subject', async (req, res) => {
     try {
-      const { name } = req.query;
-      const listStudent = await studentModel.find({subject: {$eq: name}}, )
-      res.status(200).json({status: true, message: "Successfully", data: listStudent}); 
+        const token = req.header("Authorization").split(' ')[1];
+        if(token){
+          JWT.verify(token, config.SECRETKEY, async function (err, id){
+            if(err){
+              res.status(403).json({"status": 403, "err": err});
+            }else{
+                const { name } = req.query;
+                const listStudent = await studentModel.find({subject: {$eq: name}}, )
+                res.status(200).json({status: true, message: "Successfully", data: listStudent});   
+            }
+          });
+        }else{
+          res.status(401).json({"status": 401});
+        }
+      
     } catch (e) {
         res.status(400).json({status: false, message: "Error: " + e });
     }
@@ -35,11 +59,20 @@ router.get('/all-subject', async (req, res) => {
 
 router.get('/all-score', async (req, res) => {
     try {
-      const { min, max } = req.query;
-      const listStudent = await studentModel.find({score: {$gte: min, $lte: max}});
-      res.status(200).json({status: true, message: "Successfully", data: listStudent});
-       
-
+        const token = req.header("Authorization").split(' ')[1];
+        if(token){
+          JWT.verify(token, config.SECRETKEY, async function (err, id){
+            if(err){
+              res.status(403).json({"status": 403, "err": err});
+            }else{
+                const { min, max } = req.query;
+                const listStudent = await studentModel.find({score: {$gte: min, $lte: max}});
+                res.status(200).json({status: true, message: "Successfully", data: listStudent}); 
+            }
+          });
+        }else{
+          res.status(401).json({"status": 401});
+        }
     } catch (e) {
         res.status(400).json({status: false, message: "Error: " + e })
     }
@@ -49,9 +82,21 @@ router.get('/all-score', async (req, res) => {
 
 router.get('/find-student', async (req, res) => {
     try {
-      const {code} = req.query;
-      const student = await studentModel.findOne({code: code});
-      res.status(200).json({status: true, message: "Successfully", data: student});
+        const token = req.header("Authorization").split(' ')[1];
+        if(token){
+          JWT.verify(token, config.SECRETKEY, async function (err, id){
+            if(err){
+              res.status(403).json({"status": 403, "err": err});
+            }else{
+                const {code} = req.query;
+                const student = await studentModel.findOne({code: code});
+                res.status(200).json({status: true, message: "Successfully", data: student});
+            }
+          });
+        }else{
+          res.status(401).json({"status": 401});
+        }
+      
         
 
     } catch (e) {
@@ -112,9 +157,21 @@ router.delete('/delete-student', async (req, res) => {
 
 router.get('/all-subject-score', async (req, res) => {
     try {
-      const {subjectStudent, scoreStudent} = req.query;
-      const listStudent = await studentModel.find({$and: [{subject: {$eq: subjectStudent}},{score: {$gte: scoreStudent}}]});
-      res.status(200).json({status: true, message: "Succesfully", listStudent: listStudent});
+        const token = req.header("Authorization").split(' ')[1];
+        if(token){
+          JWT.verify(token, config.SECRETKEY, async function (err, id){
+            if(err){
+              res.status(403).json({"status": 403, "err": err});
+            }else{
+                const {subjectStudent, scoreStudent} = req.query;
+                const listStudent = await studentModel.find({$and: [{subject: {$eq: subjectStudent}},{score: {$gte: scoreStudent}}]});
+                res.status(200).json({status: true, message: "Succesfully", listStudent: listStudent});
+            }
+          });
+        }else{
+          res.status(401).json({"status": 401});
+        }
+      
     } catch (e) {
         res.status(400).json({status: false, message: "Error: " + e})
     }
